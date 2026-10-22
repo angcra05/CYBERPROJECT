@@ -1,0 +1,59 @@
+// OPERATION ECHOLEAK — Screenshot-derived KQL reference
+// These are independent examples; run ONE query at a time.
+// Reconstructed from submitted screenshots; NOT newly executed.
+
+// Q1: Find the report delivery
+let start_time = datetime(2026-09-20T09:00:00Z);
+let end_time = datetime(2026-09-20T15:00:00Z);
+OfficeActivity_CL
+| where TimeGenerated between (start_time .. end_time)
+| where RunId == "el--17-20260920"
+| where UserId contains "emily"
+| where Operation == "MessageReceived"
+| where Subject contains "market"
+| project TimeGenerated, UserId, SenderAddress, Subject, AttachmentNames
+
+// Q2: Copilot's original prompt (run separately)
+/*
+CopilotAudit_CL
+| where RunId == "el--17-20260920"
+| where UserId == "emily.chen@cormorantcapital.com"
+| where isnotempty(UserPrompt)
+| where DataSourcesAccessed contains "Q3-2026-Global-Markets-Review.docx"
+| project TimeGenerated, UserPrompt, DataSourcesAccessed, SessionId
+*/
+
+// Q3: Graph tool calls (run separately)
+/*
+CopilotAudit_CL
+| where RunId == "el--17-20260920"
+| where UserId == "emily.chen@cormorantcapital.com"
+| where SessionId == "cp-emily-20261007-1042"
+| where InteractionType == "ToolCall"
+| project TimeGenerated, ToolName, ToolParameters, SensitivityLabels
+| order by TimeGenerated asc
+*/
+
+// Q4: Sensitive tool-call events (run separately)
+/*
+CopilotAudit_CL
+| where RunId == "el--17-20260920"
+| where isnotempty(ToolName) and isnotempty(SensitivityLabels)
+| project TimeGenerated, ToolName, ToolParameters, SensitivityLabels
+*/
+
+// Q5: Image URL artifact (run separately)
+/*
+CopilotAudit_CL
+| where RunId == "el--17-20260920"
+| where CopilotResponse contains "metrics-cdn.analyticshub.io"
+| project TimeGenerated, InteractionType, CopilotResponse
+*/
+
+// Q6: Baseline file-tool counts (run separately)
+/*
+CopilotAudit_CL
+| where RunId == "el--17-20260920"
+| where InteractionType == "ToolCall"
+| summarize ToolCallCount=count() by UserId, ToolName
+*/
